@@ -1,4 +1,7 @@
-import pyiqa
+try:
+    import pyiqa
+except Exception:
+    pyiqa = None
 import torch
 import os
 import numpy as np
@@ -12,9 +15,11 @@ import numpy as np
 from glob import glob
 from tqdm import tqdm
 # from pytorch_fid import fid_score
-import pytorch_lightning as pl
 import torch.nn as nn
-import torch_fidelity
+try:
+    import torch_fidelity
+except Exception:
+    torch_fidelity = None
 
 
 def get_three_imgs_names(root_path):
@@ -136,6 +141,8 @@ def train_files(file_,patch_size,overlap,p_max,lr_output_path,hr_output_path):
 
 
 def get_fid_from_path(root_path, patch_size=128, cuda=False):
+    if torch_fidelity is None:
+        raise RuntimeError("torch_fidelity is not installed")
     # 将图像分别保存
     hr_input_path, lr_input_path = save_to_single_img(root_path)
 
@@ -196,6 +203,9 @@ class single_iqa():
         if device is None:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.iqa_metrics = dict()
+        if pyiqa is None:
+            print("Skipping IQA metric initialization: pyiqa is not installed")
+            return
         # Keep the default inference path offline-safe. Some IQA backends
         # trigger additional weight downloads during construction.
         metric_specs = {

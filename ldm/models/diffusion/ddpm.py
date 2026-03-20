@@ -17,7 +17,7 @@ from functools import partial
 import itertools
 from tqdm import tqdm
 from torchvision.utils import make_grid
-from pytorch_lightning.utilities.distributed import rank_zero_only
+from pytorch_lightning.utilities.rank_zero import rank_zero_only
 from omegaconf import ListConfig
 
 from ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
@@ -218,7 +218,7 @@ class DDPM(pl.LightningModule, ImageLoggerMixin):
 
     @torch.no_grad()
     def init_from_ckpt(self, path, ignore_keys=list(), only_model=False):
-        sd = torch.load(path, map_location="cpu")
+        sd = torch.load(path, map_location="cpu", weights_only=False)
         if "state_dict" in list(sd.keys()):
             sd = sd["state_dict"]
         keys = list(sd.keys())
@@ -1667,7 +1667,7 @@ class LatentFinetuneDiffusion(LatentDiffusion):
             self.init_from_ckpt(ckpt_path, ignore_keys)
 
     def init_from_ckpt(self, path, ignore_keys=list(), only_model=False):
-        sd = torch.load(path, map_location="cpu")
+        sd = torch.load(path, map_location="cpu", weights_only=False)
         if "state_dict" in list(sd.keys()):
             sd = sd["state_dict"]
         keys = list(sd.keys())

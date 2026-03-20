@@ -13,7 +13,7 @@ from utils.common import instantiate_from_config
 
 
 def load_weight(weight_path: str) -> Dict[str, torch.Tensor]:
-    weight = torch.load(weight_path)
+    weight = torch.load(weight_path, weights_only=False)
     if "state_dict" in weight:
         weight = weight["state_dict"]
 

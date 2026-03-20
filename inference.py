@@ -181,7 +181,7 @@ def inference_batch(
     img_tensor = einops.rearrange(img_tensor, "n h w c -> n c h w").contiguous()
     ref_tensor = einops.rearrange(ref_tensor, "n h w c -> n c h w").contiguous()
 
-    txt = [''] * 10
+    txt = [''] * img_tensor.shape[0]
     batch_input = {}
     batch_input['img_gt'] = img_tensor * 2 - 1.0
     batch_input['ref_gt'] = ref_tensor
@@ -191,7 +191,7 @@ def inference_batch(
     # 编码过程，将img转换成latent, 再将latent转化成hyper，计算码流
     # 解码过程，从x_T到x_0
     autocast_enabled = model.device.type == "cuda"
-    with torch.cuda.amp.autocast(enabled=autocast_enabled):
+    with torch.amp.autocast(device_type="cuda", enabled=autocast_enabled):
         samples = model.log_images(batch = batch_input, sample_steps = steps) # samples['img_gt'] [0,1], samples['samples'] [0,1], samples['bpp']
         if not save_output and not compute_metrics:
             return defaultdict(float)
@@ -271,7 +271,7 @@ def main() -> None:
     print('model init over.')
 
     print('loading state dict...')
-    load_state_dict(model, torch.load(args.ckpt, map_location="cpu"), strict=True)
+    load_state_dict(model, torch.load(args.ckpt, map_location="cpu", weights_only=False), strict=True)
     print('loading over.')
 
     model.hyper_encoder.update(force=True)

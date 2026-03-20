@@ -30,7 +30,7 @@ def main() -> None:
 
     # TODO: resume states saved in checkpoint.
     if config.model.get("resume"): # 加载模型权重
-        load_state_dict(model, torch.load(config.model.resume, map_location="cpu"), strict=False)
+        load_state_dict(model, torch.load(config.model.resume, map_location="cpu", weights_only=False), strict=False)
     
     # model.hyper_encoder.update(force=True) # 会导致模型参数改变
     callbacks = []

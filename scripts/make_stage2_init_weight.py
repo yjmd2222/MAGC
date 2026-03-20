@@ -23,7 +23,7 @@ hyper_encoder_weight_change_list = [
 
 
 def load_weight(weight_path: str) -> Dict[str, torch.Tensor]:
-    weight = torch.load(weight_path, map_location='cpu')
+    weight = torch.load(weight_path, map_location='cpu', weights_only=False)
     if "state_dict" in weight:
         weight = weight["state_dict"]
 
