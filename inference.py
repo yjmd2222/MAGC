@@ -26,7 +26,7 @@ from collections import defaultdict
 
 
 from cal_metrics.iqa import single_iqa, get_fid_from_path
-single_iqa = single_iqa()
+# single_iqa = single_iqa()
 
 
 
