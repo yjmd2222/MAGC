@@ -2,7 +2,7 @@ import os
 
 
 import sys
-sys.path.append(".")
+sys.path.insert(0, os.path.abspath("."))
 from argparse import ArgumentParser
 from typing import Dict
 

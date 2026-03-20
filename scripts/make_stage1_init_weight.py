@@ -1,8 +1,6 @@
 import os
-os.environ['CUDA_VISIBLE_DEVICES'] = '4'
-
 import sys
-sys.path.append(".")
+sys.path.insert(0, os.path.abspath("."))
 from argparse import ArgumentParser
 from typing import Dict
 
@@ -13,7 +11,7 @@ from utils.common import instantiate_from_config
 
 
 def load_weight(weight_path: str) -> Dict[str, torch.Tensor]:
-    weight = torch.load(weight_path, weights_only=False)
+    weight = torch.load(weight_path, map_location="cpu", weights_only=False)
     if "state_dict" in weight:
         weight = weight["state_dict"]
 

@@ -1,6 +1,6 @@
 import sys
-sys.path.append(".")
 import os
+sys.path.insert(0, os.path.abspath("."))
 from argparse import ArgumentParser
 
 from utils.file import list_image_files
