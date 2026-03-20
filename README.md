@@ -56,7 +56,7 @@ CUDA_VISIBLE_DEVICES=0 python inference.py \
 --input_path ../dataset/Synthetic-v18-45k/test_4500 \
 --steps 50 \
 --batchsize 30 \
---output_root metrics_4500_magc \
+--output_path metrics_4500_magc \
 --device cuda    
 ```
 

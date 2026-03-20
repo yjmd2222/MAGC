@@ -160,8 +160,12 @@ class SpacedSampler:
         )
         # log calculation clipped because the posterior variance is 0 at the
         # beginning of the diffusion chain.
+        if len(self.posterior_variance) > 1:
+            posterior_variance_head = self.posterior_variance[1]
+        else:
+            posterior_variance_head = self.posterior_variance[0]
         self.posterior_log_variance_clipped = np.log(
-            np.append(self.posterior_variance[1], self.posterior_variance[1:])
+            np.append(posterior_variance_head, self.posterior_variance[1:])
         )
         self.posterior_mean_coef1 = (
             betas * np.sqrt(self.alphas_cumprod_prev) / (1.0 - self.alphas_cumprod)
@@ -171,6 +175,18 @@ class SpacedSampler:
             * np.sqrt(alphas)
             / (1.0 - self.alphas_cumprod)
         )
+
+    def _get_model_variance(self) -> np.ndarray:
+        if len(self.posterior_variance) > 1:
+            posterior_variance_head = self.posterior_variance[1]
+            beta_tail = self.betas[1:]
+        else:
+            posterior_variance_head = self.posterior_variance[0]
+            beta_tail = self.betas[:0]
+        return {
+            "fixed_large": np.append(posterior_variance_head, beta_tail),
+            "fixed_small": self.posterior_variance,
+        }[self.var_type]
 
     def q_sample(
         self,
@@ -349,10 +365,7 @@ class SpacedSampler:
         y_hat: torch.Tensor,
     ) -> torch.Tensor:
         # variance of posterior distribution q(x_{t-1}|x_t, x_0)
-        model_variance = {
-            "fixed_large": np.append(self.posterior_variance[1], self.betas[1:]),
-            "fixed_small": self.posterior_variance
-        }[self.var_type]
+        model_variance = self._get_model_variance()
         model_variance = _extract_into_tensor(model_variance, index, x.shape)
         
         # mean of posterior distribution q(x_{t-1}|x_t, x_0)
@@ -464,10 +477,7 @@ class SpacedSampler:
             mean, _, _ = self.q_posterior_mean_variance(
                 x_start=pred_x0, x_t=img, t=index
             )
-            variance = {
-                "fixed_large": np.append(self.posterior_variance[1], self.betas[1:]),
-                "fixed_small": self.posterior_variance
-            }[self.var_type]
+            variance = self._get_model_variance()
             variance = _extract_into_tensor(variance, index, noise_buffer.shape)
             
             nonzero_mask = (

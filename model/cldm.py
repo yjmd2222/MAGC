@@ -38,6 +38,7 @@ from collections import defaultdict
 from cal_metrics.iqa import single_iqa
 
 import shutil
+from time import perf_counter
 
 
 class ControlledUnetModel(UNetModel):
@@ -406,10 +407,19 @@ class ControlLDM(LatentDiffusion):
 
 
         # 新建文件夹，用来存放验证的图片
-        # version_num = len(os.listdir('save_dir/lightning_logs'))
-        version_list = os.listdir('save_dir/lightning_logs')
-        version_list_int = [int(i[8:]) for i in version_list]
-        version_num = sorted(version_list_int)[-1] +1 
+        log_root = 'save_dir/lightning_logs'
+        if os.path.isdir(log_root):
+            version_list = [
+                item for item in os.listdir(log_root)
+                if item.startswith('version_') and item[8:].isdigit()
+            ]
+            if version_list:
+                version_list_int = [int(i[8:]) for i in version_list]
+                version_num = sorted(version_list_int)[-1] + 1
+            else:
+                version_num = 0
+        else:
+            version_num = 0
         
         self.val_img_output_rootpath = f'save_dir/img_output/version_{version_num}/'
 
@@ -532,6 +542,7 @@ class ControlLDM(LatentDiffusion):
         log["img_gt"] = (batch['img_gt'] + 1) / 2 # img_reconstruct b 3 256 256
 
 
+        encode_start = perf_counter()
         hyper = self.hyper_encoder.hyper_compress(y,batch['ref_gt'])  # hyper['z_string'],  hyper['z_hat']
 
         y_hat, z_strings  =  hyper['y_hat'], hyper['z_strings']
@@ -539,6 +550,9 @@ class ControlLDM(LatentDiffusion):
         log['bpp_list'],log['bpp_list_z'],log['bpp_list_zz'] = self.cal_bpp(z_strings, batch['img_gt'])
 
         temp = self.hyper_encoder.forward(y,batch['ref_gt'] )
+        encoding_time = perf_counter() - encode_start
+        log["encoding_time"] = encoding_time
+        print(f"Encoding: {encoding_time:.2f}s")
 
         likelihoods = temp['likelihoods']
         log["bpp_loss"] = self.cal_bpp_loss(likelihoods, batch['img_gt'])
@@ -806,7 +820,5 @@ class ControlLDM(LatentDiffusion):
 
         self.model.train()
         
-
-
 
 

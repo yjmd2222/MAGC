@@ -26,7 +26,8 @@ from collections import defaultdict
 
 
 from cal_metrics.iqa import single_iqa, get_fid_from_path
-# single_iqa = single_iqa()
+
+single_iqa_runner = None
 
 
 
@@ -42,13 +43,6 @@ def parse_args() -> Namespace:
     step = 50
     batchsize = 30
     output_path = f'metrics_4500_magc/{ckpt_name}'
-
-    os.makedirs(output_path,exist_ok=True)
-
-
-    if not os.path.isdir(output_path):
-        os.makedirs(output_path)
-
 
     # TODO: add help info for these options
     parser.add_argument("--ckpt", type=str,default=ckpt, help="full checkpoint path")
@@ -83,7 +77,9 @@ def parse_args() -> Namespace:
     parser.add_argument("--seed", type=int, default=231)
     parser.add_argument("--device", type=str, default="cuda", choices=["cpu", "cuda", "mps"])
     
-    return parser.parse_args()
+    args = parser.parse_args()
+    os.makedirs(args.output_path, exist_ok=True)
+    return args
 
 def check_device(device):
     if device == "cuda":
@@ -129,7 +125,7 @@ def cal_metrics_and_save(samples, model, filenames, save_path, refs):
         metrics_single = {}
         img_gt_single = img_gt[i,:,:,:].unsqueeze(0)
         img_rec_single = img_rec[i,:,:,:].clamp_(0, 1).unsqueeze(0)
-        metrics = single_iqa.cal_metrics(img_gt_single, img_rec_single)
+        metrics = single_iqa_runner.cal_metrics(img_gt_single, img_rec_single)
         metrics_single['bpp'] = samples['bpp_list'][i]
 
         for k in metrics:
@@ -190,19 +186,32 @@ def inference_batch(
 
     # 编码过程，将img转换成latent, 再将latent转化成hyper，计算码流
     # 解码过程，从x_T到x_0
-    with torch.cuda.amp.autocast():
+    autocast_enabled = model.device.type == "cuda"
+    with torch.cuda.amp.autocast(enabled=autocast_enabled):
         samples = model.log_images(batch = batch_input, sample_steps = steps) # samples['img_gt'] [0,1], samples['samples'] [0,1], samples['bpp']
         metrics_batch_total = cal_metrics_and_save(samples, model, batch['filenames'], recon_path, batch['refs'])
 
     return metrics_batch_total
 
 
+def resolve_dataset_paths(input_dir):
+    input_dir = os.path.normpath(input_dir)
+    if os.path.basename(input_dir) == 'hr_256':
+        dataset_root = os.path.dirname(input_dir)
+        path_img = input_dir
+    else:
+        dataset_root = input_dir
+        path_img = os.path.join(dataset_root, 'hr_256')
+
+    # path_ref = os.path.join(dataset_root, 'ref_256_repaint_8x_resample')
+    path_ref = os.path.join(dataset_root, 'ref_256')
+    return dataset_root, path_img, path_ref
+
+
 def get_batch_list(input_dir, batchsize):
     assert os.path.isdir(input_dir)
 
-    # path_ref = os.path.join(input_dir, 'ref_256_repaint_8x_resample')
-    path_ref = os.path.join(input_dir, 'ref_256')
-    path_img = os.path.join(input_dir, 'hr_256')
+    dataset_root, path_img, path_ref = resolve_dataset_paths(input_dir)
     
     list_ref = [os.path.join(path_ref, item) for item in os.listdir(path_ref) if item.endswith('.png')]
     list_img = [os.path.join(path_img, item) for item in os.listdir(path_img) if item.endswith('.png')]
@@ -235,9 +244,12 @@ def get_batch_list(input_dir, batchsize):
 
 
 def main() -> None:
+    global single_iqa_runner
     args = parse_args()
     pl.seed_everything(args.seed)
     args.device = check_device(args.device)
+    metric_device = torch.device(args.device)
+    single_iqa_runner = single_iqa(device=metric_device)
     
     # 加载模型权重
     print('model init...')
@@ -268,14 +280,20 @@ def main() -> None:
             results[k] += v
 
 
-    img_paths = os.path.join(args.input_path, 'hr_256')
+    _, img_paths, _ = resolve_dataset_paths(args.input_path)
     img_num = len(os.listdir(img_paths))
     for k, v in results.items():
         results[k] = v / img_num
 
 
     # 计算fid
-    results['fid'],results['kid'] = get_fid_from_path(args.output_path)
+    try:
+        results['fid'],results['kid'] = get_fid_from_path(
+            args.output_path,
+            cuda=(metric_device.type == "cuda"),
+        )
+    except Exception as exc:
+        print(f"Skipping FID/KID calculation: {exc}")
     
     for i in results: # 保留4位小数
         results[i] = "{:.4f}".format(results[i])

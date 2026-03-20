@@ -135,7 +135,7 @@ def train_files(file_,patch_size,overlap,p_max,lr_output_path,hr_output_path):
 
 
 
-def get_fid_from_path(root_path,patch_size = 128):
+def get_fid_from_path(root_path, patch_size=128, cuda=False):
     # 将图像分别保存
     hr_input_path, lr_input_path = save_to_single_img(root_path)
 
@@ -165,7 +165,7 @@ def get_fid_from_path(root_path,patch_size = 128):
     metrics_dict = torch_fidelity.calculate_metrics(
         input1=lr_output_path, 
         input2=hr_output_path, 
-        cuda=True, 
+        cuda=cuda, 
         fid=True, 
         kid=True, 
         verbose=False,
@@ -192,15 +192,22 @@ def get_fid_from_path(root_path,patch_size = 128):
 
 
 class single_iqa():
-    def __init__(self,device=torch.device('cuda')):
+    def __init__(self, device=None):
+        if device is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.iqa_metrics = dict()
-        self.iqa_metrics['lpips'] = pyiqa.create_metric('lpips', device=device)
-        self.iqa_metrics['psnr'] = pyiqa.create_metric('psnr',test_y_channel=True, device=device)
-        self.iqa_metrics['dists'] = pyiqa.create_metric('dists', device=device)
-        self.iqa_metrics['msssim'] = pyiqa.create_metric('ms_ssim',test_y_channel=True, device=device)  
-        self.iqa_metrics['niqe'] = pyiqa.create_metric('niqe', device=device)
-        self.iqa_metrics['clipiqa'] = pyiqa.create_metric('clipiqa', device=device)
-        self.iqa_metrics['musiq'] = pyiqa.create_metric('musiq', device=device)
+        # Keep the default inference path offline-safe. Some IQA backends
+        # trigger additional weight downloads during construction.
+        metric_specs = {
+            'lpips': dict(device=device),
+            'psnr': dict(test_y_channel=True, device=device),
+            'msssim': dict(test_y_channel=True, device=device),
+        }
+        for metric_name, kwargs in metric_specs.items():
+            try:
+                self.iqa_metrics[metric_name] = pyiqa.create_metric(metric_name, **kwargs)
+            except Exception as exc:
+                print(f"Skipping IQA metric {metric_name}: {exc}")
         # self.iqa_metrics['maniqa'] = pyiqa.create_metric('maniqa', device=device)
 
 
@@ -208,13 +215,20 @@ class single_iqa():
 
     def cal_metrics(self, or_01, re_01):
         metrics_single = {}
-        metrics_single["psnr"] = float(self.iqa_metrics['psnr'](or_01, re_01).item()),
-        metrics_single["msssim"] = float(self.iqa_metrics['msssim'](or_01, re_01).item()),
-        metrics_single["lpips"] = float(self.iqa_metrics['lpips'](or_01, re_01).item()),
-        metrics_single["dists"] = float(self.iqa_metrics['dists'](or_01, re_01).item()),
-        metrics_single["musiq"] = float(self.iqa_metrics['musiq'](re_01).item()),
-        # metrics_single["niqe"] = float(self.iqa_metrics['niqe'](re_01).item()),
-        metrics_single["clipiqa"] = float(self.iqa_metrics['clipiqa'](re_01).item()),
+        if 'psnr' in self.iqa_metrics:
+            metrics_single["psnr"] = float(self.iqa_metrics['psnr'](or_01, re_01).item()),
+        if 'msssim' in self.iqa_metrics:
+            metrics_single["msssim"] = float(self.iqa_metrics['msssim'](or_01, re_01).item()),
+        if 'lpips' in self.iqa_metrics:
+            metrics_single["lpips"] = float(self.iqa_metrics['lpips'](or_01, re_01).item()),
+        if 'dists' in self.iqa_metrics:
+            metrics_single["dists"] = float(self.iqa_metrics['dists'](or_01, re_01).item()),
+        if 'musiq' in self.iqa_metrics:
+            metrics_single["musiq"] = float(self.iqa_metrics['musiq'](re_01).item()),
+        # if 'niqe' in self.iqa_metrics:
+        #     metrics_single["niqe"] = float(self.iqa_metrics['niqe'](re_01).item()),
+        if 'clipiqa' in self.iqa_metrics:
+            metrics_single["clipiqa"] = float(self.iqa_metrics['clipiqa'](re_01).item()),
         # metrics_single["maniqa"] = float(self.iqa_metrics['maniqa'](re_01).item()),
         
 
