@@ -73,6 +73,8 @@ def parse_args() -> Namespace:
     parser.add_argument("--output_path", type=str, default=output_path)
     parser.add_argument("--show_lq", action="store_true")
     parser.add_argument("--skip_if_exist", action="store_true")
+    parser.add_argument("--no_warmup", action="store_true")
+    parser.add_argument("--warmup_steps", type=int, default=1)
     
     parser.add_argument("--seed", type=int, default=231)
     parser.add_argument("--device", type=str, default="cuda", choices=["cpu", "cuda", "mps"])
@@ -170,6 +172,8 @@ def inference_batch(
     batch: dict, 
     recon_path: str,
     steps: int,
+    save_output: bool = True,
+    compute_metrics: bool = True,
     ):
 
     img_tensor = torch.tensor(np.stack(batch['imgs']) / 255.0, dtype=torch.float32, device=model.device).clamp_(0, 1)
@@ -189,6 +193,8 @@ def inference_batch(
     autocast_enabled = model.device.type == "cuda"
     with torch.cuda.amp.autocast(enabled=autocast_enabled):
         samples = model.log_images(batch = batch_input, sample_steps = steps) # samples['img_gt'] [0,1], samples['samples'] [0,1], samples['bpp']
+        if not save_output and not compute_metrics:
+            return defaultdict(float)
         metrics_batch_total = cal_metrics_and_save(samples, model, batch['filenames'], recon_path, batch['refs'])
 
     return metrics_batch_total
@@ -240,6 +246,14 @@ def get_batch_list(input_dir, batchsize):
     return batch_list
 
 
+def get_warmup_batch(batch):
+    return {
+        'imgs': batch['imgs'][:1],
+        'refs': batch['refs'][:1],
+        'filenames': batch['filenames'][:1],
+    }
+
+
 
 
 
@@ -267,6 +281,19 @@ def main() -> None:
     
     # 获取数据集
     batch_list = get_batch_list(args.input_path, args.batchsize)
+
+    if batch_list and not args.no_warmup:
+        print('running warmup batch...')
+        warmup_batch = get_warmup_batch(batch_list[0])
+        inference_batch(
+            model,
+            warmup_batch,
+            args.output_path,
+            steps=args.warmup_steps,
+            save_output=False,
+            compute_metrics=False,
+        )
+        print('warmup over.')
 
     results = defaultdict(float)
     for i, batch in enumerate(batch_list): 
