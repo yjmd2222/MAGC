@@ -1,0 +1,4 @@
+magc_ckpts
+toy_datasets
+__pycache__/
+*.ckpt
