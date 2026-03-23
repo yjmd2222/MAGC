@@ -66,7 +66,7 @@ CUDA_VISIBLE_DEVICES=0 python inference.py \
 ```
 
 ## <a name="train"></a>:stars:Train
-For the first stage, you can loat the pretrained parameters:
+For the first stage, you can load the pretrained parameters:
 ```shell
 python scripts/make_stage1_init_weight.py \
 --cldm_config configs/model/cldm_stage2.yaml \
@@ -78,7 +78,7 @@ Then you can start the first training stage:
 python train.py \
 --config configs/train_cldm_stage1.yaml
 ```
-For the second stage, you can loat the parameters obtained in the first stage:
+For the second stage, you can load the parameters obtained in the first stage:
 ```shell
 python scripts/make_stage2_init_weight.py \
 --cldm_config configs/model/cldm_stage2.yaml \
