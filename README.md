@@ -34,10 +34,15 @@ Official code for [Map-Assisted Remote-Sensing Image Compression at Extremely Lo
 # clone this repo
 git clone https://github.com/WHUyyx/MAGC.git
 
-# create an environment with python >= 3.9
-conda create -n MAGC python=3.9
+# create an environment with python >= 3.10
+conda create -n MAGC python=3.10
 conda activate MAGC
 pip install -r requirements.txt
+
+# or do it via uv
+uv venv --python 3.10
+source .venv/bin/activate
+uv pip install --index-strategy unsafe-best-match -r requirements-gpu.txt
 ```
 
 ## <a name="pretrained_models"></a>:dna:Pretrained Models
