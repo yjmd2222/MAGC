@@ -70,8 +70,7 @@ nvidia-ml-py==12.535.133
 omegaconf==2.3.0
 open-clip-torch==3.3.0
 openai-clip==1.0.1
-opencv-python==4.9.0.80
-opencv-python-headless==4.13.0.92
+opencv-python==4.13.0.92
 orjson==3.10.0
 packaging==24.0
 pandas==2.3.3
