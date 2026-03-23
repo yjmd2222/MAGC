@@ -6,4 +6,3 @@ metrics/
 metrics-warmup/
 *plan.md
 plans/
-compressai/*.so

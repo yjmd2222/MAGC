@@ -117,7 +117,7 @@ six==1.16.0
 sniffio==1.3.1
 starlette==0.37.2
 sympy==1.12
--e git+https://github.com/simon-schaefer/tar.git@bf28a959fb150ceeadbd9f0bcfc12f3025cf82f4#egg=tar
+tar @ git+https://github.com/simon-schaefer/tar.git@bf28a959fb150ceeadbd9f0bcfc12f3025cf82f4
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
 thop==0.1.1.post2209072238
