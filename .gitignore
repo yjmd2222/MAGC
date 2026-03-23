@@ -6,3 +6,4 @@ metrics/
 metrics-warmup/
 *plan.md
 plans/
+save_dir/lightning_logs/

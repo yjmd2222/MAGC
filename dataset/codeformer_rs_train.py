@@ -10,9 +10,6 @@ import torchvision
 
 from utils.file import load_file_list
 from utils.image import center_crop_arr, augment, random_crop_arr
-from utils.degradation import (
-    random_mixed_kernels, random_add_gaussian_noise, random_add_jpg_compression
-)
 
 
 class CodeformerDataset(data.Dataset):
