@@ -38,7 +38,7 @@ def load_weight(weight_path: str) -> Dict[str, torch.Tensor]:
 parser = ArgumentParser()
 parser.add_argument("--cldm_config", type=str, default='configs/model/cldm_stage2.yaml')
 parser.add_argument("--sd_weight", type=str, default='/mnt/massive/wangce/yyx/SDcompression/magc_ckpts/ckpts_stage2/v50_step=91999-lpips=0.2130.ckpt')
-parser.add_argument("--hyper_encoder_weight", type=str, default='/mnt/massive/wangce/yyx/SDcompression/magc_ckpts_map_in_decoder/ckpts_stage1/bpp6.ckpt')
+parser.add_argument("--hyper_encoder_weight", type=str, default=None)
 parser.add_argument("--output", type=str, default='pretrained/stage2_ft/bbp6.ckpt')
 args = parser.parse_args()
 
