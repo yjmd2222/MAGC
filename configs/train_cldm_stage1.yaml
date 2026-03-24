@@ -28,7 +28,7 @@ lightning:
     # Number of GPUs used for training.
     devices: 1
     # Path to save logs and checkpoints.
-    default_root_dir: save_dir_stage1
+    default_root_dir: save_dir/stage1
     # Max number of training steps (batches).
     max_steps: 10 # 500001
     # Validation frequency in terms of training steps.

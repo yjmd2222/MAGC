@@ -29,7 +29,7 @@ lightning:
     devices: 1
     strategy: ddp_find_unused_parameters_true # ddp
     # Path to save logs and checkpoints.
-    default_root_dir: save_dir_stage2
+    default_root_dir: save_dir/stage2
     # Max number of training steps (batches).
     max_steps: 10 # 500001
     # Validation frequency in terms of training steps.

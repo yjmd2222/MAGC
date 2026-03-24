@@ -6,6 +6,6 @@ metrics/
 metrics-warmup/
 *plan.md
 plans/
-save_dir/lightning_logs/
+save_dir/
 2. Map Assisted Generative Compression (MAGC).pdf
 filelists/
