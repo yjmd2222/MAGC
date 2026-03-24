@@ -37,7 +37,7 @@ git clone https://github.com/WHUyyx/MAGC.git
 # create an environment with python >= 3.10
 conda create -n MAGC python=3.10
 conda activate MAGC
-pip install -r requirements.txt
+pip install -r requirements-gpu.txt
 
 # or do it via uv
 uv venv --python 3.10
@@ -50,6 +50,34 @@ Please download the pretrained model from [Google Drive](https://drive.google.co
 
 ## <a name="dataset"></a>:climbing:Dataset
 Please access the training set and test set from [SGDM](https://github.com/wwangcece/SGDM).
+
+MAGC training expects two parallel file lists:
+- `hr`: target images
+- `ref`: map-assisted reference images
+
+Each file list is a plain text file with one image path per line. The `hr` and `ref` lists must be aligned by order, so line `i` in the `hr` file corresponds to line `i` in the `ref` file.
+
+You can generate the manifests with:
+
+```shell
+python scripts/make_file_list.py \
+--hr /path/to/hr_256 \
+--ref /path/to/ref_256 \
+--val-size 500 \
+--save-folder filelists
+```
+
+This will generate:
+- `filelists/train_hr.txt`
+- `filelists/train_ref.txt`
+- `filelists/val_hr.txt`
+- `filelists/val_ref.txt`
+
+Then update:
+- `configs/dataset/rs_dlg_train.yaml`
+- `configs/dataset/rs_dlg_val.yaml`
+
+to point to the generated file lists.
 
 
 
