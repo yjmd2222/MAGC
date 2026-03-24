@@ -93,6 +93,8 @@ CUDA_VISIBLE_DEVICES=0 python inference.py \
 --device cuda    
 ```
 
+Note: `inference.py` currently exposes `--tiled`, `--tile_size`, and `--tile_stride`, but the active inference path does not wire those flags into sampling yet. The tile sampler implementation exists in `model/spaced_sampler.py`, however the current `inference.py -> model.log_images() -> sample_log()` flow still uses whole-image sampling.
+
 ## <a name="train"></a>:stars:Train
 For the first stage, you can load the pretrained parameters:
 ```shell
